@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SLB Fleet Control — Inspección Pre-Operacional</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --slb-deep-blue: #0C2340; --slb-blue: #0066B2; --slb-aqua: #00A3E0;
+            --slb-light-aqua: #E8F6FC; --slb-white: #FFFFFF; --slb-gray-50: #F8FAFC;
+            --slb-gray-100: #F1F5F9; --slb-gray-200: #E2E8F0; --slb-gray-300: #CBD5E1;
+            --slb-gray-400: #94A3B8; --slb-gray-600: #475569; --slb-gray-800: #1E293B;
+            --slb-success: #059669; --slb-success-light: #ECFDF5; --slb-warning: #D97706;
+            --slb-danger: #DC2626; --slb-danger-light: #FEF2F2;
+            --radius: 12px; --radius-sm: 8px;
+            --shadow-sm: 0 1px 3px rgba(12,35,64,0.08); --shadow-md: 0 4px 16px rgba(12,35,64,0.1);
+            --shadow-lg: 0 8px 32px rgba(12,35,64,0.12); --shadow-xl: 0 16px 48px rgba(12,35,64,0.16);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--slb-gray-50); color:var(--slb-gray-800); min-height:100vh; -webkit-font-smoothing:antialiased; }
+
+        .header { background:linear-gradient(135deg,var(--slb-deep-blue) 0%,#0A1C33 50%,var(--slb-deep-blue) 100%); position:sticky; top:0; z-index:100; box-shadow:0 4px 20px rgba(12,35,64,0.3); }
+        .header-inner { max-width:640px; margin:0 auto; padding:20px 24px; display:flex; align-items:center; gap:16px; }
+        .header-logo { width:48px; height:48px; background:var(--slb-aqua); border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow:0 4px 12px rgba(0,163,224,0.3); }
+        .header-logo svg { width:28px; height:28px; fill:var(--slb-white); }
+        .header-text h1 { font-size:18px; font-weight:800; color:var(--slb-white); letter-spacing:-0.02em; line-height:1.2; }
+        .header-text p { font-size:13px; color:var(--slb-aqua); font-weight:500; margin-top:2px; letter-spacing:0.02em; }
+
+        .progress-container { background:rgba(255,255,255,0.06); padding:12px 24px 16px; max-width:640px; margin:0 auto; }
+        .progress-info { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+        .progress-info span { font-size:12px; color:var(--slb-gray-300); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; }
+        .progress-bar { height:4px; background:rgba(255,255,255,0.1); border-radius:4px; overflow:hidden; }
+        .progress-fill { height:100%; background:linear-gradient(90deg,var(--slb-aqua),#4DD0E1); border-radius:4px; transition:width 0.5s cubic-bezier(0.4,0,0.2,1); width:0%; }
+
+        .main { max-width:640px; margin:0 auto; padding:24px 16px 120px; }
+
+        .section-card { background:var(--slb-white); border-radius:var(--radius); padding:24px; margin-bottom:16px; box-shadow:var(--shadow-sm); border:1px solid var(--slb-gray-200); transition:box-shadow 0.2s ease; }
+        .section-card:focus-within { box-shadow:var(--shadow-md); border-color:var(--slb-aqua); }
+        .section-header { display:flex; align-items:center; gap:12px; margin-bottom:20px; }
+        .section-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .section-icon.blue { background:var(--slb-light-aqua); color:var(--slb-blue); }
+        .section-icon.green { background:var(--slb-success-light); color:var(--slb-success); }
+        .section-icon.amber { background:#FEF3C7; color:var(--slb-warning); }
+        .section-icon.red { background:var(--slb-danger-light); color:var(--slb-danger); }
+        .section-icon svg { width:22px; height:22px; }
+        .section-title { font-size:15px; font-weight:700; color:var(--slb-deep-blue); letter-spacing:-0.01em; }
+        .section-subtitle { font-size:12px; color:var(--slb-gray-400); font-weight:500; margin-top:1px; }
+
+        .form-group { margin-bottom:18px; }
+        .form-group:last-child { margin-bottom:0; }
+        label { display:block; font-size:13px; font-weight:600; color:var(--slb-gray-600); margin-bottom:6px; letter-spacing:0.01em; }
+        label .required { color:var(--slb-danger); margin-left:2px; }
+        input[type="text"],input[type="email"],textarea,select { width:100%; padding:12px 16px; border:1.5px solid var(--slb-gray-200); border-radius:var(--radius-sm); font-family:'Plus Jakarta Sans',sans-serif; font-size:15px; color:var(--slb-gray-800); background:var(--slb-white); transition:all 0.2s ease; outline:none; }
+        input[type="text"]:focus,input[type="email"]:focus,textarea:focus,select:focus { border-color:var(--slb-aqua); box-shadow:0 0 0 3px rgba(0,163,224,0.12); }
+        input::placeholder,textarea::placeholder { color:var(--slb-gray-300); }
+        textarea { resize:vertical; min-height:80px; }
+        select { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2394A3B8' viewBox='0 0 16 16'%3E%3Cpath d='M4.5 6l3.5 4 3.5-4H4.5z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; padding-right:40px; cursor:pointer; }
+
+        .file-upload-zone { border:2px dashed var(--slb-gray-200); border-radius:var(--radius-sm); padding:24px 16px; text-align:center; cursor:pointer; transition:all 0.25s ease; background:var(--slb-gray-50); position:relative; }
+        .file-upload-zone:hover { border-color:var(--slb-aqua); background:var(--slb-light-aqua); }
+        .file-upload-zone.has-file { border-color:var(--slb-success); border-style:solid; background:var(--slb-success-light); }
+        .file-upload-zone.has-file .upload-placeholder { display:none; }
+        .file-upload-zone input[type="file"] { position:absolute; inset:0; opacity:0; cursor:pointer; }
+        .upload-placeholder svg { width:36px; height:36px; color:var(--slb-gray-300); margin-bottom:8px; }
+        .upload-placeholder p { font-size:13px; color:var(--slb-gray-400); font-weight:500; }
+        .upload-placeholder .upload-hint { font-size:11px; color:var(--slb-gray-300); margin-top:4px; }
+        .file-preview { display:none; align-items:center; gap:12px; }
+        .file-preview.visible { display:flex; }
+        .file-preview-thumb { width:56px; height:56px; border-radius:8px; object-fit:cover; border:2px solid var(--slb-white); box-shadow:var(--shadow-sm); }
+        .file-preview-doc { width:56px; height:56px; border-radius:8px; background:var(--slb-light-aqua); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .file-preview-doc svg { width:24px; height:24px; color:var(--slb-blue); }
+        .file-preview-info { flex:1; text-align:left; }
+        .file-preview-name { font-size:13px; font-weight:600; color:var(--slb-gray-800); word-break:break-all; }
+        .file-preview-size { font-size:11px; color:var(--slb-gray-400); margin-top:2px; }
+        .file-remove { width:32px; height:32px; border-radius:8px; border:none; background:var(--slb-danger-light); color:var(--slb-danger); cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.2s ease; }
+        .file-remove:hover { background:var(--slb-danger); color:var(--slb-white); }
+
+        .captcha-box { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+        .captcha-challenge { background:linear-gradient(135deg,var(--slb-deep-blue),#1a3a5c); color:var(--slb-white); font-size:24px; font-weight:800; letter-spacing:8px; padding:12px 20px; border-radius:8px; user-select:none; position:relative; overflow:hidden; min-width:140px; text-align:center; font-family:'Courier New',monospace; }
+        .captcha-challenge::before { content:''; position:absolute; top:45%; left:-10%; right:-10%; height:2px; background:rgba(0,163,224,0.4); transform:rotate(-4deg); }
+        .captcha-challenge::after { content:''; position:absolute; top:60%; left:-5%; right:-5%; height:1px; background:rgba(255,255,255,0.2); transform:rotate(3deg); }
+        .captcha-input-wrap { flex:1; min-width:140px; }
+        .captcha-input-wrap input { width:100%; padding:12px 16px; border:1.5px solid var(--slb-gray-200); border-radius:var(--radius-sm); font-family:'Plus Jakarta Sans',sans-serif; font-size:16px; color:var(--slb-gray-800); background:var(--slb-white); outline:none; text-transform:uppercase; letter-spacing:4px; text-align:center; transition:all 0.2s ease; }
+        .captcha-input-wrap input:focus { border-color:var(--slb-aqua); box-shadow:0 0 0 3px rgba(0,163,224,0.12); }
+        .captcha-input-wrap input.captcha-error { border-color:var(--slb-danger); box-shadow:0 0 0 3px rgba(220,38,38,0.12); animation:shake 0.4s ease; }
+        .captcha-refresh { width:44px; height:44px; border-radius:10px; border:1.5px solid var(--slb-gray-200); background:var(--slb-white); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s ease; flex-shrink:0; }
+        .captcha-refresh:hover { border-color:var(--slb-aqua); background:var(--slb-light-aqua); }
+        .captcha-refresh svg { width:20px; height:20px; color:var(--slb-gray-600); }
+        .captcha-hint { font-size:11px; color:var(--slb-gray-400); margin-top:8px; width:100%; }
+        @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 50%{transform:translateX(6px)} 75%{transform:translateX(-4px)} }
+
+        .rate-limit-banner { display:none; background:var(--slb-danger-light); border:1px solid #FECACA; border-radius:var(--radius-sm); padding:14px 16px; margin-bottom:16px; font-size:13px; color:var(--slb-danger); font-weight:600; align-items:center; gap:10px; }
+        .rate-limit-banner.visible { display:flex; }
+        .rate-limit-banner svg { width:20px; height:20px; flex-shrink:0; }
+
+        .hp-field { position:absolute; left:-9999px; top:-9999px; opacity:0; height:0; width:0; overflow:hidden; }
+
+        .submit-container { position:fixed; bottom:0; left:0; right:0; background:var(--slb-white); border-top:1px solid var(--slb-gray-200); padding:16px; z-index:100; box-shadow:0 -4px 20px rgba(12,35,64,0.08); }
+        .submit-inner { max-width:640px; margin:0 auto; }
+        .btn-submit { width:100%; padding:16px 24px; background:linear-gradient(135deg,var(--slb-blue) 0%,var(--slb-deep-blue) 100%); color:var(--slb-white); border:none; border-radius:var(--radius-sm); font-family:'Plus Jakarta Sans',sans-serif; font-size:15px; font-weight:700; cursor:pointer; transition:all 0.3s ease; letter-spacing:0.02em; display:flex; align-items:center; justify-content:center; gap:10px; }
+        .btn-submit:hover { transform:translateY(-1px); box-shadow:0 8px 24px rgba(0,102,178,0.35); }
+        .btn-submit:active { transform:translateY(0); }
+        .btn-submit:disabled { opacity:0.6; cursor:not-allowed; transform:none; box-shadow:none; }
+        .btn-submit svg { width:20px; height:20px; }
+        .spinner { width:20px; height:20px; border:2.5px solid rgba(255,255,255,0.3); border-top-color:var(--slb-white); border-radius:50%; animation:spin 0.7s linear infinite; }
+        @keyframes spin { to{transform:rotate(360deg)} }
+
+        .status-overlay { display:none; position:fixed; inset:0; background:rgba(12,35,64,0.7); backdrop-filter:blur(4px); z-index:200; align-items:center; justify-content:center; padding:24px; }
+        .status-overlay.visible { display:flex; }
+        .status-card { background:var(--slb-white); border-radius:16px; padding:40px 32px; text-align:center; max-width:400px; width:100%; box-shadow:var(--shadow-xl); animation:slideUp 0.4s cubic-bezier(0.4,0,0.2,1); }
+        @keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+        .status-icon { width:64px; height:64px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; }
+        .status-icon.success { background:var(--slb-success-light); color:var(--slb-success); }
+        .status-icon.error { background:var(--slb-danger-light); color:var(--slb-danger); }
+        .status-icon svg { width:32px; height:32px; }
+        .status-title { font-size:20px; font-weight:800; color:var(--slb-deep-blue); margin-bottom:8px; }
+        .status-message { font-size:14px; color:var(--slb-gray-600); line-height:1.5; margin-bottom:24px; }
+        .btn-status { padding:12px 32px; border-radius:var(--radius-sm); border:none; font-family:'Plus Jakarta Sans',sans-serif; font-size:14px; font-weight:700; cursor:pointer; transition:all 0.2s ease; }
+        .btn-new { background:var(--slb-blue); color:var(--slb-white); }
+        .btn-new:hover { background:var(--slb-deep-blue); }
+        .btn-retry { background:var(--slb-danger); color:var(--slb-white); }
+        .btn-retry:hover { background:#B91C1C; }
+
+        .timestamp-badge { background:var(--slb-light-aqua); color:var(--slb-blue); font-size:12px; font-weight:600; padding:6px 12px; border-radius:20px; display:inline-flex; align-items:center; gap:6px; margin-bottom:16px; }
+        .timestamp-badge svg { width:14px; height:14px; }
+
+        @media (max-width:480px) { .header-inner{padding:16px} .main{padding:16px 12px 120px} .section-card{padding:20px 16px} }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-inner">
+            <div class="header-logo"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg></div>
+            <div class="header-text"><h1>SLB Fleet Control</h1><p>Inspección Pre-Operacional</p></div>
+        </div>
+        <div class="progress-container">
+            <div class="progress-info"><span>Progreso del formulario</span><span id="progressText">0%</span></div>
+            <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        </div>
+    </header>
+
+    <main class="main">
+        <form id="inspectionForm" novalidate>
+            <div class="rate-limit-banner" id="rateLimitBanner">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <span>Has alcanzado el límite de envíos. Intenta de nuevo en <strong id="rateLimitTime"></strong>.</span>
+            </div>
+
+            <!-- Honeypot -->
+            <div class="hp-field" aria-hidden="true"><label for="website">Website</label><input type="text" id="website" name="website" tabindex="-1" autocomplete="off"></div>
+
+            <div class="timestamp-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span id="currentDateTime"></span>
+            </div>
+
+            <!-- Vehicle Info -->
+            <div class="section-card">
+                <div class="section-header">
+                    <div class="section-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg></div>
+                    <div><div class="section-title">Información del Vehículo</div><div class="section-subtitle">Datos de identificación</div></div>
+                </div>
+                <div class="form-group"><label>Placa del vehículo <span class="required">*</span></label><input type="text" id="placa" placeholder="Ej: ABC-123" required style="text-transform:uppercase;" maxlength="10"></div>
+                <div class="form-group"><label>Nombre del conductor <span class="required">*</span></label><input type="text" id="conductor" placeholder="Nombre completo" required></div>
+                <div class="form-group"><label>Correo electrónico <span class="required">*</span></label><input type="email" id="correo" placeholder="correo@ejemplo.com" required></div>
+            </div>
+
+            <!-- Inspection -->
+            <div class="section-card">
+                <div class="section-header">
+                    <div class="section-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div>
+                    <div><div class="section-title">Estado del Vehículo</div><div class="section-subtitle">Evaluación general</div></div>
+                </div>
+                <div class="form-group"><label>Estado general <span class="required">*</span></label><select id="estadoGeneral" required><option value="" disabled selected>Seleccione un estado</option><option value="Bueno">✅ Bueno</option><option value="Regular">⚠️ Regular</option><option value="Malo">❌ Malo</option></select></div>
+                <div class="form-group"><label>Observaciones</label><textarea id="observaciones" placeholder="Describa cualquier novedad o hallazgo..." rows="3"></textarea></div>
+            </div>
+
+            <!-- Photos -->
+            <div class="section-card">
+                <div class="section-header">
+                    <div class="section-icon amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>
+                    <div><div class="section-title">Registro Fotográfico</div><div class="section-subtitle">Evidencia de la inspección</div></div>
+                </div>
+                <div class="form-group">
+                    <label>Foto frontal del vehículo <span class="required">*</span></label>
+                    <div class="file-upload-zone" id="zone-fotoFrontal"><input type="file" accept="image/*" capture="environment" onchange="handleFileSelect(this,'fotoFrontal','image')"><div class="upload-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg><p>Tomar foto o seleccionar archivo</p><p class="upload-hint">JPG, PNG — Máximo 10MB</p></div><div class="file-preview" id="preview-fotoFrontal"><img class="file-preview-thumb" id="thumb-fotoFrontal" src="" alt=""><div class="file-preview-info"><div class="file-preview-name" id="name-fotoFrontal"></div><div class="file-preview-size" id="size-fotoFrontal"></div></div><button type="button" class="file-remove" onclick="removeFile('fotoFrontal')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div></div>
+                </div>
+                <div class="form-group">
+                    <label>Foto del tablero / kilometraje <span class="required">*</span></label>
+                    <div class="file-upload-zone" id="zone-fotoTablero"><input type="file" accept="image/*" capture="environment" onchange="handleFileSelect(this,'fotoTablero','image')"><div class="upload-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg><p>Tomar foto o seleccionar archivo</p><p class="upload-hint">JPG, PNG — Máximo 10MB</p></div><div class="file-preview" id="preview-fotoTablero"><img class="file-preview-thumb" id="thumb-fotoTablero" src="" alt=""><div class="file-preview-info"><div class="file-preview-name" id="name-fotoTablero"></div><div class="file-preview-size" id="size-fotoTablero"></div></div><button type="button" class="file-remove" onclick="removeFile('fotoTablero')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div></div>
+                </div>
+            </div>
+
+            <!-- Documents -->
+            <div class="section-card">
+                <div class="section-header">
+                    <div class="section-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+                    <div><div class="section-title">Documentos</div><div class="section-subtitle">Documentación del vehículo</div></div>
+                </div>
+                <div class="form-group">
+                    <label>Documento SOAT</label>
+                    <div class="file-upload-zone" id="zone-documentoSOAT"><input type="file" accept="image/*,.pdf" onchange="handleFileSelect(this,'documentoSOAT','document')"><div class="upload-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><p>Subir documento o foto</p><p class="upload-hint">PDF, JPG, PNG — Máximo 10MB</p></div><div class="file-preview" id="preview-documentoSOAT"><div class="file-preview-doc" id="docicon-documentoSOAT"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><img class="file-preview-thumb" id="thumb-documentoSOAT" src="" alt="" style="display:none;"><div class="file-preview-info"><div class="file-preview-name" id="name-documentoSOAT"></div><div class="file-preview-size" id="size-documentoSOAT"></div></div><button type="button" class="file-remove" onclick="removeFile('documentoSOAT')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div></div>
+                </div>
+            </div>
+
+            <!-- Captcha -->
+            <div class="section-card">
+                <div class="section-header">
+                    <div class="section-icon red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div>
+                    <div><div class="section-title">Verificación de Seguridad</div><div class="section-subtitle">Confirme que no es un robot</div></div>
+                </div>
+                <div class="form-group">
+                    <label>Escriba el código que ve en la imagen <span class="required">*</span></label>
+                    <div class="captcha-box">
+                        <div class="captcha-challenge" id="captchaDisplay"></div>
+                        <div class="captcha-input-wrap"><input type="text" id="captchaInput" placeholder="Código" maxlength="6" autocomplete="off"></div>
+                        <button type="button" class="captcha-refresh" onclick="generateCaptcha()" title="Nuevo código"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg></button>
+                        <div class="captcha-hint">Ingrese los caracteres sin espacios. No distingue mayúsculas.</div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </main>
+
+    <div class="submit-container"><div class="submit-inner">
+        <button type="button" class="btn-submit" id="btnSubmit" onclick="submitForm()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>Enviar Inspección
+        </button>
+    </div></div>
+
+    <div class="status-overlay" id="successOverlay"><div class="status-card">
+        <div class="status-icon success"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+        <div class="status-title">¡Inspección Enviada!</div><div class="status-message">Los datos y archivos se han registrado correctamente en el sistema.</div>
+        <button class="btn-status btn-new" onclick="resetForm()">Nueva Inspección</button>
+    </div></div>
+
+    <div class="status-overlay" id="errorOverlay"><div class="status-card">
+        <div class="status-icon error"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>
+        <div class="status-title">Error al Enviar</div><div class="status-message" id="errorMessage">Ocurrió un error. Verifica tu conexión e intenta nuevamente.</div>
+        <button class="btn-status btn-retry" onclick="closeError()">Intentar de Nuevo</button>
+    </div></div>
+
+    <script>
+        const POWER_AUTOMATE_URL = 'https://default41ff26dc250f4b138981739be8610c.21.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/fd30ec96f7464a6a9d4a452e929e237a/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=s32EACBoiIANcrA3ylCFj6VgMobVTl_e2j40wFPc6Mo';
+        const RATE_LIMIT_MAX = 5;
+        const RATE_LIMIT_WINDOW = 30;
+        const MIN_FILL_TIME = 15;
+
+        const fileData = { fotoFrontal:null, fotoTablero:null, documentoSOAT:null };
+        let captchaCode = '';
+        let formLoadTime = Date.now();
+
+        // ── Captcha ──
+        function generateCaptcha() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            captchaCode = '';
+            for (let i = 0; i < 5; i++) captchaCode += chars.charAt(Math.floor(Math.random() * chars.length));
+            document.getElementById('captchaDisplay').textContent = captchaCode;
+            document.getElementById('captchaInput').value = '';
+            document.getElementById('captchaInput').classList.remove('captcha-error');
+        }
+        function validateCaptcha() { return document.getElementById('captchaInput').value.trim().toUpperCase() === captchaCode; }
+
+        // ── Rate Limiting ──
+        function getSubmissionLog() {
+            try { const log = JSON.parse(localStorage.getItem('slb_inspection_log') || '[]'); return log.filter(ts => ts > Date.now() - RATE_LIMIT_WINDOW * 60000); } catch { return []; }
+        }
+        function logSubmission() { const log = getSubmissionLog(); log.push(Date.now()); try { localStorage.setItem('slb_inspection_log', JSON.stringify(log)); } catch {} }
+        function isRateLimited() { return getSubmissionLog().length >= RATE_LIMIT_MAX; }
+        function getRemainingTime() { const log = getSubmissionLog(); if (!log.length) return 0; return Math.ceil(Math.max(0, Math.min(...log) + RATE_LIMIT_WINDOW * 60000 - Date.now()) / 60000); }
+        function checkRateLimit() {
+            if (isRateLimited()) {
+                const mins = getRemainingTime();
+                document.getElementById('rateLimitTime').textContent = mins + ' minuto' + (mins !== 1 ? 's' : '');
+                document.getElementById('rateLimitBanner').classList.add('visible');
+                document.getElementById('btnSubmit').disabled = true;
+                return true;
+            }
+            document.getElementById('rateLimitBanner').classList.remove('visible');
+            document.getElementById('btnSubmit').disabled = false;
+            return false;
+        }
+
+        // ── Security ──
+        function isHoneypotFilled() { return document.getElementById('website').value.length > 0; }
+        function isFilledTooFast() { return (Date.now() - formLoadTime) < MIN_FILL_TIME * 1000; }
+
+        // ── Timestamp ──
+        function updateDateTime() {
+            const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit' };
+            document.getElementById('currentDateTime').textContent = new Date().toLocaleDateString('es-CO', opts);
+        }
+        updateDateTime(); setInterval(updateDateTime, 60000);
+
+        // ── Progress ──
+        function updateProgress() {
+            const fields = [
+                document.getElementById('placa').value.trim(),
+                document.getElementById('conductor').value.trim(),
+                document.getElementById('correo').value.trim(),
+                document.getElementById('estadoGeneral').value,
+                fileData.fotoFrontal, fileData.fotoTablero
+            ];
+            const pct = Math.round(fields.filter(f => f).length / fields.length * 100);
+            document.getElementById('progressFill').style.width = pct + '%';
+            document.getElementById('progressText').textContent = pct + '%';
+        }
+        ['placa','conductor','correo','estadoGeneral','observaciones'].forEach(id => {
+            document.getElementById(id).addEventListener('input', updateProgress);
+            document.getElementById(id).addEventListener('change', updateProgress);
+        });
+
+        // ── Files ──
+        function handleFileSelect(input, fieldName, type) {
+            const file = input.files[0];
+            if (!file) return;
+            if (file.size > 10485760) { alert('El archivo excede el tamaño máximo de 10MB.'); input.value = ''; return; }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                fileData[fieldName] = { name:file.name, base64:e.target.result.split(',')[1], size:file.size, type:file.type };
+                document.getElementById('zone-' + fieldName).classList.add('has-file');
+                document.getElementById('preview-' + fieldName).classList.add('visible');
+                document.getElementById('name-' + fieldName).textContent = file.name;
+                document.getElementById('size-' + fieldName).textContent = formatFileSize(file.size);
+                if (type === 'image') { document.getElementById('thumb-' + fieldName).src = e.target.result; }
+                else {
+                    const thumb = document.getElementById('thumb-' + fieldName), docIcon = document.getElementById('docicon-' + fieldName);
+                    if (file.type.startsWith('image/')) { thumb.src = e.target.result; thumb.style.display = 'block'; docIcon.style.display = 'none'; }
+                    else { thumb.style.display = 'none'; docIcon.style.display = 'flex'; }
+                }
+                updateProgress();
+            };
+            reader.readAsDataURL(file);
+        }
+        function removeFile(fieldName) {
+            fileData[fieldName] = null;
+            document.getElementById('zone-' + fieldName).classList.remove('has-file');
+            document.getElementById('preview-' + fieldName).classList.remove('visible');
+            document.getElementById('zone-' + fieldName).querySelector('input[type="file"]').value = '';
+            updateProgress();
+        }
+        function formatFileSize(b) { return b < 1024 ? b+' B' : b < 1048576 ? (b/1024).toFixed(1)+' KB' : (b/1048576).toFixed(1)+' MB'; }
+
+        // ── Submit ──
+        async function submitForm() {
+            if (isHoneypotFilled()) { console.warn('Bot detected'); return; }
+            if (isFilledTooFast()) { alert('Por favor, tómese su tiempo para completar el formulario.'); return; }
+            if (checkRateLimit()) return;
+
+            const placa = document.getElementById('placa').value.trim().toUpperCase();
+            const conductor = document.getElementById('conductor').value.trim();
+            const correo = document.getElementById('correo').value.trim();
+            const estadoGeneral = document.getElementById('estadoGeneral').value;
+            const observaciones = document.getElementById('observaciones').value.trim();
+
+            if (!placa) return alert('Por favor ingrese la placa del vehículo.');
+            if (!conductor) return alert('Por favor ingrese el nombre del conductor.');
+            if (!correo || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) return alert('Por favor ingrese un correo electrónico válido.');
+            if (!estadoGeneral) return alert('Por favor seleccione el estado general.');
+            if (!fileData.fotoFrontal) return alert('Por favor adjunte la foto frontal del vehículo.');
+            if (!fileData.fotoTablero) return alert('Por favor adjunte la foto del tablero.');
+            if (!validateCaptcha()) {
+                document.getElementById('captchaInput').classList.add('captcha-error');
+                alert('El código de verificación es incorrecto. Intente de nuevo.');
+                generateCaptcha(); return;
+            }
+
+            const btn = document.getElementById('btnSubmit');
+            const originalHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div> Enviando inspección...';
+
+            const payload = {
+                placa, conductor, correo, estadoGeneral, observaciones,
+                fotoFrontal: fileData.fotoFrontal?.base64 || '',
+                fotoFrontalNombre: fileData.fotoFrontal?.name || '',
+                fotoTablero: fileData.fotoTablero?.base64 || '',
+                fotoTableroNombre: fileData.fotoTablero?.name || '',
+                documentoSOAT: fileData.documentoSOAT?.base64 || '',
+                documentoSOATNombre: fileData.documentoSOAT?.name || '',
+                _ts: Date.now(),
+                _ft: Math.round((Date.now() - formLoadTime) / 1000)
+            };
+
+            try {
+                const response = await fetch(POWER_AUTOMATE_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+                if (response.ok || response.status === 202) { logSubmission(); document.getElementById('successOverlay').classList.add('visible'); }
+                else throw new Error('Error ' + response.status);
+            } catch (error) {
+                document.getElementById('errorMessage').textContent = 'Error al enviar: ' + error.message + '. Verifica tu conexión e intenta nuevamente.';
+                document.getElementById('errorOverlay').classList.add('visible');
+            } finally { btn.disabled = false; btn.innerHTML = originalHTML; }
+        }
+
+        // ── Reset ──
+        function resetForm() {
+            document.getElementById('inspectionForm').reset();
+            fileData.fotoFrontal = fileData.fotoTablero = fileData.documentoSOAT = null;
+            ['fotoFrontal','fotoTablero','documentoSOAT'].forEach(f => {
+                document.getElementById('zone-' + f)?.classList.remove('has-file');
+                document.getElementById('preview-' + f)?.classList.remove('visible');
+            });
+            document.getElementById('successOverlay').classList.remove('visible');
+            formLoadTime = Date.now();
+            generateCaptcha(); updateProgress(); checkRateLimit();
+            window.scrollTo({ top:0, behavior:'smooth' });
+        }
+        function closeError() { document.getElementById('errorOverlay').classList.remove('visible'); }
+
+        // ── Init ──
+        generateCaptcha(); updateProgress(); checkRateLimit(); setInterval(checkRateLimit, 30000);
+    </script>
+</body>
+</html>
